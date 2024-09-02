@@ -25,7 +25,7 @@ def get_infos_client(selected_client: pd.DataFrame) -> tuple[float, list, list]:
     client_data = selected_client.to_dict(orient="records")
     try:
         response = requests.post(
-            "http://0.0.0.0:5000/api/infos_client",
+            "https://alphafinance-b31189df9933.herokuapp.com/api/infos_client",
             headers=headers,
             json=client_data,
         )
