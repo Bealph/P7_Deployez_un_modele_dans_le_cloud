@@ -103,7 +103,8 @@ if st.session_state.selected_client:
         try:
             if st.session_state.selected_client in client_data['SK_ID_CURR'].astype(str).values:
                 data_by_client = client_data[client_data['SK_ID_CURR'] == int(st.session_state.selected_client)].iloc[0].drop(labels='SK_ID_CURR')
-                prediction_proba, _, _ = ra.get_infos_client(data_by_client)
+                
+                prediction_proba, _, _ = ra.get_infos_client(pd.DataFrame(data_by_client).T)
 
                 if prediction_proba is None:
                     st.error("Erreur : Les données de prédiction ne sont pas disponibles.")
@@ -142,7 +143,7 @@ if st.session_state.selected_client:
 
                     st.write('------------------------------')
 
-                    prediction_proba, feature_names, feature_importance = ra.get_infos_client(data_by_client)
+                    prediction_proba, feature_names, feature_importance = ra.get_infos_client(pd.DataFrame(data_by_client).T)
 
                     feature_names_upper = [name.upper() for name in feature_names]
 
@@ -221,7 +222,7 @@ if st.session_state.selected_client:
         try:
             if st.session_state.selected_client in client_data['SK_ID_CURR'].astype(str).values:
                 data_by_client = client_data[client_data['SK_ID_CURR'] == int(st.session_state.selected_client)].iloc[0].drop(labels='SK_ID_CURR')
-                prediction_proba, feature_names, feature_importance = ra.get_infos_client(data_by_client)
+                prediction_proba, feature_names, feature_importance = ra.get_infos_client(pd.DataFrame(data_by_client).T)
 
                 if feature_names is None or feature_importance is None:
                     st.error("Erreur : Les données de l'API ne sont pas disponibles.")
