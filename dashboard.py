@@ -1,12 +1,13 @@
 import streamlit as st
 import altair as alt
-import pandas as pd
+
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly.express as px
 import request_app as ra
 import pickle
 from PIL import Image
+import pandas as pd
 
 # Import des shap_values et expected_value
 with open('shap_values.pkl', 'rb') as shap_file:
