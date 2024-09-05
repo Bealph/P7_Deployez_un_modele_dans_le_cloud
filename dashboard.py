@@ -59,6 +59,8 @@ st.markdown(
 # Charger les données depuis le fichier CSV
 client_data = pd.read_csv("top_50_train.csv", encoding='utf-8')
 
+vrai_val_client_data = pd.read_csv("top_50_vraiVal_X_train.csv", encoding='utf-8')
+
 descrip_columns = pd.read_csv('HomeCredit_columns_description_translated.csv', encoding='utf-8')
 lexique = descrip_columns[['Row', 'Description']]
 
@@ -308,10 +310,32 @@ if st.session_state.selected_client:
                     combined_chart = boxplot + boxplot_by_client
                     st.altair_chart(combined_chart, use_container_width=True)
 
-                    st.write("Données du client sélectionné:")
-                    df_filtered_client_data = pd.DataFrame({'Value': filtered_client_data.values}, index=filtered_client_data.index)
-                    df_filtered_client_data.index.name = 'Feature'
-                    st.dataframe(df_filtered_client_data.reset_index().transpose())
+                    # Obtenir les index et les valeurs du dataset vrai_val_client_data
+                    indexes, values = ra.get_index_and_values_from_vrai_val_client_data()
+
+                    # Trouver l'index du client sélectionné
+                    client_index = int(st.session_state.selected_client)
+
+                    # Trouver les données du client
+                    client_data_by_id = vrai_val_client_data[vrai_val_client_data['SK_ID_CURR'] == client_index]
+
+                    if not client_data_by_id.empty:
+                        # Réinitialiser l'index pour qu'il devienne une colonne normale
+                        client_data_by_id = client_data_by_id.reset_index(drop=True)
+
+                        # Supprimer la colonne SK_ID_CURR du DataFrame
+                       # client_data_by_id = client_data_by_id.drop(client_data_by_id.columns[0], axis=1)
+
+                        # Appliquer le style pour formater les valeurs et centrer le texte
+                        styled_df = client_data_by_id.style.format("{:.1f}")
+
+                        # Afficher le DataFrame formaté sans la colonne d'index
+                        st.write("Données du client sélectionné:")
+                        st.dataframe(styled_df)
+
+                       
+                    else:
+                        st.error("Les données du client sélectionné ne sont pas disponibles.")
 
                     st.write('------------------------------')
 
