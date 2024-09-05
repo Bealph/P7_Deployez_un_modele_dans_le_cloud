@@ -111,6 +111,7 @@ if st.session_state.selected_client:
                     st.error("Erreur : Les données de prédiction ne sont pas disponibles.")
                 else:
 
+                    st.markdown('<u><h3>Évaluation du Risque de Crédit :</h3></u>', unsafe_allow_html=True)
                     st.write(f"Probabilité de défaut de paiement : {prediction_proba[0]:.2f}")
 
                     fig_gauge = go.Figure(go.Indicator(
@@ -136,6 +137,7 @@ if st.session_state.selected_client:
 
                     ######################## ChartPlot ##############################
 
+                    st.markdown('<u><h3>Analyse des Probabilités par Décision :</h3></u>', unsafe_allow_html=True)
                     classes = ['Risque', 'Favorable']
                     values = [prediction_proba[0], prediction_proba[1]]
     
@@ -143,6 +145,8 @@ if st.session_state.selected_client:
                     st.plotly_chart(fig_chartplot)
 
                     st.write('------------------------------')
+
+                    st.markdown('<u><h3>Impact des Facteurs Clés sur le Score de Crédit du Client :</h3></u>', unsafe_allow_html=True)
 
                     prediction_proba, feature_names, feature_importance = ra.get_infos_client(pd.DataFrame(data_by_client).T)
 
@@ -181,6 +185,7 @@ if st.session_state.selected_client:
 
                     ######################## Decision Plot ##############################
 
+                    st.markdown('<u><h3>Comparaison des Caractéristiques de Décision avec la Valeur Attendue :</h3></u>', unsafe_allow_html=True)
                     val_expected_value = expected_value
                     expected_values_list = [val_expected_value]
                     expected_value_avg = round(sum(expected_values_list) / len(expected_values_list), 3)
@@ -237,12 +242,15 @@ if st.session_state.selected_client:
                     top_10_lexique = pd.merge(top_10_df, lexique, on='Row')
 
                     fig, ax = plt.subplots()
-                    st.write("Lexiques des 10 variables les plus importantes qui participent à la prise de décision d'octroi de crédit:")
+
+
+                    st.markdown("<u><h3>Top 10 des Variables Clés pour l'Octroi de Crédit et Leur Description :</h3></u>", unsafe_allow_html=True)
+
                     st.table(top_10_lexique[['Row', 'Description']].rename(columns={'Row': 'Variables', 'Description': 'Lexique'}))
 
                     ####################### Histogramme ###########################
 
-                    st.write(" Les barres plus hautes indiquent des variables plus déterminantes, fournissant ainsi une vue d'ensemble rapide des facteurs clés pris en compte dans la décision d'accorder un crédit.")
+                    st.markdown("<u><h3>Classement des 10 Variables Impactant les Décisions de Crédit :</h3></u>", unsafe_allow_html=True)
                     
                     st.write(" ")
 
@@ -262,7 +270,7 @@ if st.session_state.selected_client:
 
                     ####################### Boxplot ###########################     
 
-                    st.write(" Les points représentent les valeurs des variables numériques pour ce client, offrant une comparaison visuelle immédiate avec la distribution générale des données")
+                    st.markdown("<u><h3>Analyse des Principales Caractéristiques de Crédit pour le Client Sélectionné :</h3></u>", unsafe_allow_html=True)
                     
                     st.write(" ")
 
@@ -309,6 +317,8 @@ if st.session_state.selected_client:
 
                     ###################### chartplot #####################
     
+                    st.markdown("<u><h3>Importance des caractéristiques pour le Modèle de Crédit :</h3></u>", unsafe_allow_html=True)
+
                     st.write(" La position et la longueur de chaque barre reflètent respectivement l'importance de chaque caractéristique et son impact sur la décision d'accorder un crédit.")
 
                     fig, ax = plt.subplots()
@@ -328,6 +338,8 @@ if st.session_state.selected_client:
 
                     #####################  Decision Plot  #####################
 
+                    st.markdown("<u><h3>Poids des Critères dans l'Évaluation de Crédit :</h3></u>", unsafe_allow_html=True)
+                    
                     st.write(" Les caractéristiques qui contribuent le plus à l'accord de crédit sont visualisées par des barres plus hautes, tandis que celles ayant une influence moindre sont représentées par des barres plus courtes.")
 
                     fig, ax = plt.subplots()
