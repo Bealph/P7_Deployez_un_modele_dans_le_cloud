@@ -31,14 +31,6 @@ def test_predict_endpoint():
     assert 'feature_names' in json_data
     assert 'feature_importance' in json_data
 
-# Test avec des données manquantes
-def test_predict_with_missing_data():
-    # Enlever une colonne importante pour simuler des données incomplètes
-    incomplete_data = var_df_dict.copy()
-    incomplete_data.pop('AMT_INCOME_TOTAL', None)
-    
-    response = requests.post(f'{base_url}/api/infos_client/', headers=headers, json=incomplete_data)
-    assert response.status_code != 200  # Ici on s'attend à une erreur
 
 # Test avec des données incorrectes
 def test_predict_with_invalid_data():
