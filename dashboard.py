@@ -106,117 +106,130 @@ if st.session_state.selected_client:
         try:
             if st.session_state.selected_client in client_data['SK_ID_CURR'].astype(str).values:
                 data_by_client = client_data[client_data['SK_ID_CURR'] == int(st.session_state.selected_client)].iloc[0].drop(labels='SK_ID_CURR')
+
+                # Obtenir la probabilité de défaut
+                prediction_proba, feature_names, feature_importance = ra.get_infos_client(pd.DataFrame(data_by_client).T)
+                probability = prediction_proba[0]  # La probabilité de défaut de paiement
+
+                st.markdown('<u><h3>Évaluation du Risque de Crédit :</h3></u>', unsafe_allow_html=True)
+            
+
+                # Ajouter les phrases en fonction de la probabilité
+                if probability < 0.40:
+                    st.markdown('<p style="color: green; text-align: center;">Le prêt peut-être accordé</p>', unsafe_allow_html=True)
+                elif probability > 0.60:
+                    st.markdown('<p style="color: red; text-align: center;">Le prêt ne peut pas être accordé</p>', unsafe_allow_html=True)
+
+
+                fig_gauge = go.Figure(go.Indicator(
+                    mode="gauge+number",
+                    value=probability * 100,
+                    title={'text': "Probabilité de défaut de paiement"},
+                    gauge={
+                        'axis': {'range': [0, 100]},
+                        'bar': {'color': "darkblue"},
+                        'steps': [
+                            {'range': [0, 40], 'color': "lightgreen"},
+                            {'range': [40, 60], 'color': "yellow"},
+                            {'range': [60, 100], 'color': "red"}
+                        ],
+                    }
+                ))
+
+                st.plotly_chart(fig_gauge, use_container_width=True)
+
+                st.write('------------------------------')
+
+                ######################## ChartPlot ##############################
+
+                st.markdown('<u><h3>Analyse des Probabilités par Décision :</h3></u>', unsafe_allow_html=True)
+                classes = ['Risque', 'Favorable']
+                values = [prediction_proba[0], prediction_proba[1]]
+
+                # Création du graphique avec couleurs personnalisées
+                fig_chartplot = px.bar(
+                    x=classes,
+                    y=values,
+                    labels={'x': 'Décision', 'y': 'Probabilité'},
+                    color=classes,  # Utilisation des classes pour colorier les barres
+                    color_discrete_map={'Risque': 'red', 'Favorable': 'green'}  # Spécification des couleurs
+                )
+
+                # Affichage du graphique
+                st.plotly_chart(fig_chartplot, use_container_width=True)
+
+                st.write('------------------------------')
+
+                st.markdown('<u><h3>Impact des Facteurs Clés sur le Score de Crédit du Client :</h3></u>', unsafe_allow_html=True)
+
+                prediction_proba, feature_names, feature_importance = ra.get_infos_client(pd.DataFrame(data_by_client).T)
+
+                feature_names_upper = [name.upper() for name in feature_names]
+
+                top_10_indices = sorted(range(len(feature_importance)), key=lambda i: feature_importance[i], reverse=True)[:10]
+                top_10_features = [(feature_names_upper[i], feature_importance[i]) for i in top_10_indices]
+
+                top_10_df = pd.DataFrame(top_10_features, columns=['Variables', 'Importance'])
+                top_10_df['Variables'] = top_10_df['Variables'].str.lower()
+                var_list = top_10_df['Variables'].tolist()
+
+                # Extraire les shap_values correspondant au client sélectionné
+                client_index = client_data[client_data['SK_ID_CURR'] == int(st.session_state.selected_client)].index[0]
+                shap_values_client = shap_values[client_index]
                 
-                prediction_proba, _, _ = ra.get_infos_client(pd.DataFrame(data_by_client).T)
+                # Assurez-vous que les noms de variables dans `filtered_feature` correspondent à ceux dans `shap_values_client`
+                shap_values_client_subset = {var: shap_values_client[feature_names.index(var)] for var in var_list}
+                shap_df = pd.DataFrame(shap_values_client_subset, index=[0])
 
-                if prediction_proba is None:
-                    st.error("Erreur : Les données de prédiction ne sont pas disponibles.")
-                else:
+                st.write("Les valeurs SHAP positives ou négatives indiquent l'ampleur de l'impact, tandis que les caractéristiques les plus à droite sont les plus influentes.")
 
-                    st.markdown('<u><h3>Évaluation du Risque de Crédit :</h3></u>', unsafe_allow_html=True)
-                    st.write(f"Probabilité de défaut de paiement : {prediction_proba[0]:.2f}")
+                c = alt.Chart(shap_df.melt()).mark_bar().encode(
+                    x=alt.X('variable:N', title='Feature'),
+                    y=alt.Y('value:Q', title='SHAP Value'),
+                    color=alt.Color('value:Q', scale=alt.Scale(scheme='viridis'), title='SHAP Value'),
+                    tooltip=['variable:N', 'value:Q']
+                ).properties(
+                    title=f'Pour le Client {st.session_state.selected_client}',
+                    width=600,
+                    height=400
+                )
 
-                    fig_gauge = go.Figure(go.Indicator(
-                        mode="gauge+number",
-                        value=prediction_proba[0] * 100,
-                        title={'text': "Score de crédit"},
-                        gauge={
-                            'axis': {'range': [0, 100]},
-                            'bar': {'color': "darkblue"},
-                            'steps': [
-                                {'range': [0, 50], 'color': "lightgreen"},
-                                {'range': [50, 80], 'color': "yellow"},
-                                {'range': [80, 100], 'color': "red"}
-                            ],
-                        }
-                    ))
+                st.altair_chart(c)
 
-                    st.plotly_chart(fig_gauge, use_container_width=True)
+                st.write('------------------------------')
 
-                    st.write('------------------------------')
+                ######################## Decision Plot ##############################REVOIR CETTE PARTIE : verifier l'expected_value !!!
 
-                    st.title("A savoir :")
+                st.markdown('<u><h3>Comparaison des Caractéristiques de Décision avec la Valeur Attendue :</h3></u>', unsafe_allow_html=True)
+                val_expected_value = expected_value
+                expected_values_list = [val_expected_value]
+                expected_value_avg = round(sum(expected_values_list) / len(expected_values_list), 3)
 
-                    ######################## ChartPlot ##############################
+                shap_df_selected_melted = shap_df.melt()
+                shap_df_selected_melted['is_expected_value'] = 'No'
+                shap_df_selected_melted.loc[shap_df_selected_melted['variable'] == 'expected_value', 'is_expected_value'] = 'Yes'
 
-                    st.markdown('<u><h3>Analyse des Probabilités par Décision :</h3></u>', unsafe_allow_html=True)
-                    classes = ['Risque', 'Favorable']
-                    values = [prediction_proba[0], prediction_proba[1]]
-    
-                    fig_chartplot = px.bar(x=classes, y=values, labels={'x': 'Décision', 'y': 'Probabilité'})
-                    st.plotly_chart(fig_chartplot)
+                decision_chart = alt.Chart(shap_df_selected_melted, title="Decision Plot Features").mark_line(opacity=0.3).encode(
+                    y='variable:N',
+                    x='value:Q',
+                    detail='index:N',
+                    color=alt.Color('is_expected_value:N', title='Expected Value', scale=alt.Scale(domain=['Yes', 'No'], range=['green', 'red']))
+                ).properties(
+                    title=f'Pour le Client {st.session_state.selected_client}',
+                    width=600,
+                    height=400
+                )
 
-                    st.write('------------------------------')
+                expected_value_rule = alt.Chart(pd.DataFrame({'expected_value': [expected_value_avg]})).mark_rule(strokeDash=[2, 2]).encode(
+                    y='expected_value:Q',
+                    color=alt.value('green')
+                )
 
-                    st.markdown('<u><h3>Impact des Facteurs Clés sur le Score de Crédit du Client :</h3></u>', unsafe_allow_html=True)
+                st.altair_chart(decision_chart + expected_value_rule)
 
-                    prediction_proba, feature_names, feature_importance = ra.get_infos_client(pd.DataFrame(data_by_client).T)
-
-                    feature_names_upper = [name.upper() for name in feature_names]
-
-                    top_10_indices = sorted(range(len(feature_importance)), key=lambda i: feature_importance[i], reverse=True)[:10]
-                    top_10_features = [(feature_names_upper[i], feature_importance[i]) for i in top_10_indices]
-
-                    top_10_df = pd.DataFrame(top_10_features, columns=['Variables', 'Importance'])
-                    top_10_df['Variables'] = top_10_df['Variables'].str.lower()
-                    var_list = top_10_df['Variables'].tolist()
-
-                    filtered_feature = client_data[var_list]
-                    shap_values_client = shap_values[filtered_feature.index[0]]
-                    shap_values_client_subset = shap_values_client[:len(var_list)]
-                    shap_values_clients_subset = shap_values_client_subset[:50]
-                    shap_dict = {var_name: shap_values_clients_subset[i] for i, var_name in enumerate(var_list)}
-                    shap_df = pd.DataFrame(shap_dict, index=[0])
-
-                    st.write("Les valeurs SHAP positives ou négatives indiquent l'ampleur de l'impact, tandis que les caractéristiques les plus à droite sont les plus influentes.")
-
-                    c = alt.Chart(shap_df.melt()).mark_bar().encode(
-                        x=alt.X('variable:N', title='Feature'),
-                        y=alt.Y('value:Q', title='SHAP Value'),
-                        color=alt.Color('value:Q', scale=alt.Scale(scheme='viridis'), title='SHAP Value'),
-                        tooltip=['variable:N', 'value:Q']
-                    ).properties(
-                        title=f'Pour le Client {st.session_state.selected_client}',
-                        width=600,
-                        height=400
-                    )
-
-                    st.altair_chart(c)
-
-                    st.write('------------------------------')
-
-                    ######################## Decision Plot ##############################
-
-                    st.markdown('<u><h3>Comparaison des Caractéristiques de Décision avec la Valeur Attendue :</h3></u>', unsafe_allow_html=True)
-                    val_expected_value = expected_value
-                    expected_values_list = [val_expected_value]
-                    expected_value_avg = round(sum(expected_values_list) / len(expected_values_list), 3)
-
-                    shap_df_selected_melted = shap_df.melt()
-                    shap_df_selected_melted['is_expected_value'] = 'No'
-                    shap_df_selected_melted.loc[shap_df_selected_melted['variable'] == 'expected_value', 'is_expected_value'] = 'Yes'
-
-                    decision_chart = alt.Chart(shap_df_selected_melted, title="Decision Plot Features").mark_line(opacity=0.3).encode(
-                        y='variable:N',
-                        x='value:Q',
-                        detail='index:N',
-                        color=alt.Color('is_expected_value:N', title='Expected Value', scale=alt.Scale(domain=['Yes', 'No'], range=['green', 'red']))
-                    ).properties(
-                        title=f'Pour le Client {st.session_state.selected_client}',
-                        width=600,
-                        height=400
-                    )
-
-                    expected_value_rule = alt.Chart(pd.DataFrame({'expected_value': [expected_value_avg]})).mark_rule(strokeDash=[2, 2]).encode(
-                        y='expected_value:Q',
-                        color=alt.value('green')
-                    )
-
-                    st.altair_chart(decision_chart + expected_value_rule)
-
-                    st.write("Ce qu'il faut observer :")
-                    st.write(" " + "Les zones où la ligne de la caractéristique traverse la ligne de règle pointillée indiquent des changements significatifs dans la décision.")
-                    st.write(" " + "En analysant les intersections et les pentes de ces lignes, on peut identifier les caractéristiques clés ayant le plus d'impact sur la décision de crédit.")
+                st.write("Ce qu'il faut observer :")
+                st.write(" " + "Les zones où la ligne de la caractéristique traverse la ligne de règle pointillée indiquent des changements significatifs dans la décision.")
+                st.write(" " + "En analysant les intersections et les pentes de ces lignes, on peut identifier les caractéristiques clés ayant le plus d'impact sur la décision de crédit.")
 
             else:
                 st.error("Le client sélectionné est introuvable dans les données.")
@@ -262,11 +275,6 @@ if st.session_state.selected_client:
                     ).properties(width=500, height=400)
 
                     st.altair_chart(bar_plot)
-                    ax.bar(top_10_df['Row'], top_10_df['Importance'])
-                    ax.set_xlabel('Variables')
-                    ax.set_ylabel('Importance')
-                    ax.set_title('Les 10 variables les plus importantes')
-                    st.pyplot(fig)
 
                     st.write('------------------------------')
 
