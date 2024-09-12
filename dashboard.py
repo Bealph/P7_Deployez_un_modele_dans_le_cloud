@@ -93,13 +93,6 @@ if st.session_state.selected_client:
                 data_by_client_df = pd.DataFrame(data_by_client).T
 
                 prediction_proba, feature_names, feature_importance = ra.get_infos_client(data_by_client_df)
-
-
-            #if st.session_state.selected_client in client_data['SK_ID_CURR'].astype(str).values:
-                #data_by_client = client_data[client_data['SK_ID_CURR'] == int(st.session_state.selected_client)].iloc[0].drop(labels='SK_ID_CURR')
-
-                # Obtenir la probabilité de défaut
-                #prediction_proba, feature_names, feature_importance = ra.get_infos_client(pd.DataFrame(data_by_client).T)
                 probability = prediction_proba[0]  # La probabilité de défaut de paiement
 
                 st.markdown('<u><h3>Évaluation du Risque de Crédit :</h3></u>', unsafe_allow_html=True)
@@ -107,7 +100,9 @@ if st.session_state.selected_client:
 
                 # Ajouter les phrases en fonction de la probabilité
                 if probability < 0.40:
-                    st.markdown('<p style="color: green; text-align: center;">Le prêt peut-être accordé</p>', unsafe_allow_html=True)
+                    st.markdown('<p style="color: green; text-align: center;">Le prêt peut être accordé</p>', unsafe_allow_html=True)
+                elif 0.41 <= probability <= 0.59:
+                    st.markdown('<p style="color: orange; text-align: center;">Client à risque</p>', unsafe_allow_html=True)
                 elif probability > 0.60:
                     st.markdown('<p style="color: red; text-align: center;">Le prêt ne peut pas être accordé</p>', unsafe_allow_html=True)
 
@@ -121,7 +116,7 @@ if st.session_state.selected_client:
                         'bar': {'color': "darkblue"},
                         'steps': [
                             {'range': [0, 40], 'color': "lightgreen"},
-                            {'range': [40, 60], 'color': "yellow"},
+                            {'range': [40, 60], 'color': "orange"},
                             {'range': [60, 100], 'color': "red"}
                         ],
                     }
@@ -242,7 +237,6 @@ if st.session_state.selected_client:
                 data_by_client_df = pd.DataFrame(data_by_client).T
 
                 prediction_proba, feature_names, feature_importance = ra.get_infos_client(data_by_client_df)
-
 
                 if feature_names is None or feature_importance is None:
                     st.error("Erreur : Les données de l'API ne sont pas disponibles.")
