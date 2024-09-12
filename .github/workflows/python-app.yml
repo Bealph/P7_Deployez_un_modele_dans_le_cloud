@@ -22,4 +22,4 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest unittest_app.py
+        pytest 
