@@ -1,6 +1,5 @@
 import streamlit as st
 import altair as alt
-
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import plotly.express as px
@@ -22,26 +21,6 @@ col1, col2, col3 = st.columns([1, 1, 1])
 with col2:
     st.image(image, width=250, output_format="JPEG")
 
-st.markdown(
-    """
-<style>
-.header {
-    font-size : 24px;
-    text-align : center;
-    text-decoration : underline;
-}
-</style>
-
-<style>
-.centered-text {
-    text-align : justify;
-    text-align-last : center;
-}
-</style>
-
-""",
-    unsafe_allow_html=True
-)
 
 st.markdown(
     '<h1 class="header">Tableau de bord en temps réel</h1>',
@@ -105,10 +84,22 @@ if st.session_state.selected_client:
 
         try:
             if st.session_state.selected_client in client_data['SK_ID_CURR'].astype(str).values:
-                data_by_client = client_data[client_data['SK_ID_CURR'] == int(st.session_state.selected_client)].iloc[0].drop(labels='SK_ID_CURR')
+
+                # Obtenir l'indice du client sélectionné
+                client_index = client_data[client_data['SK_ID_CURR'] == int(st.session_state.selected_client)].index[0]
+
+                # Filtrer les données du client
+                data_by_client = client_data.loc[client_index].drop(labels='SK_ID_CURR')
+                data_by_client_df = pd.DataFrame(data_by_client).T
+
+                prediction_proba, feature_names, feature_importance = ra.get_infos_client(data_by_client_df)
+
+
+            #if st.session_state.selected_client in client_data['SK_ID_CURR'].astype(str).values:
+                #data_by_client = client_data[client_data['SK_ID_CURR'] == int(st.session_state.selected_client)].iloc[0].drop(labels='SK_ID_CURR')
 
                 # Obtenir la probabilité de défaut
-                prediction_proba, feature_names, feature_importance = ra.get_infos_client(pd.DataFrame(data_by_client).T)
+                #prediction_proba, feature_names, feature_importance = ra.get_infos_client(pd.DataFrame(data_by_client).T)
                 probability = prediction_proba[0]  # La probabilité de défaut de paiement
 
                 st.markdown('<u><h3>Évaluation du Risque de Crédit :</h3></u>', unsafe_allow_html=True)
@@ -242,15 +233,23 @@ if st.session_state.selected_client:
 
         try:
             if st.session_state.selected_client in client_data['SK_ID_CURR'].astype(str).values:
-                data_by_client = client_data[client_data['SK_ID_CURR'] == int(st.session_state.selected_client)].iloc[0].drop(labels='SK_ID_CURR')
-                prediction_proba, feature_names, feature_importance = ra.get_infos_client(pd.DataFrame(data_by_client).T)
+
+                # Obtenir l'indice du client sélectionné
+                client_index = client_data[client_data['SK_ID_CURR'] == int(st.session_state.selected_client)].index[0]
+
+                # Filtrer les données du client
+                data_by_client = client_data.loc[client_index].drop(labels='SK_ID_CURR')
+                data_by_client_df = pd.DataFrame(data_by_client).T
+
+                prediction_proba, feature_names, feature_importance = ra.get_infos_client(data_by_client_df)
+
 
                 if feature_names is None or feature_importance is None:
                     st.error("Erreur : Les données de l'API ne sont pas disponibles.")
                 else:
                     feature_names_upper = [name.upper() for name in feature_names]
 
-                    top_10_indices = sorted(range(len(feature_importance)), key=lambda i: feature_importance[i], reverse=True)[:11]
+                    top_10_indices = sorted(range(len(feature_importance)), key=lambda i: feature_importance[i], reverse=True)[:10]
                     top_10_features = [(feature_names_upper[i], feature_importance[i]) for i in top_10_indices]
 
                     top_10_df = pd.DataFrame(top_10_features, columns=['Row', 'Importance'])
@@ -259,7 +258,7 @@ if st.session_state.selected_client:
                     fig, ax = plt.subplots()
 
 
-                    st.markdown("<u><h3>Top 10 des Variables Clés pour l'Octroi de Crédit et Leur Description :</h3></u>", unsafe_allow_html=True)
+                    st.markdown("<u><h3>Top 10 des Variables Clés pour l'Octroi de Crédit et Leur Description:</h3></u>", unsafe_allow_html=True)
 
                     st.table(top_10_lexique[['Row', 'Description']].rename(columns={'Row': 'Variables', 'Description': 'Lexique'}))
 
@@ -331,9 +330,6 @@ if st.session_state.selected_client:
                         # Réinitialiser l'index pour qu'il devienne une colonne normale
                         client_data_by_id = client_data_by_id.reset_index(drop=True)
 
-                        # Supprimer la colonne SK_ID_CURR du DataFrame
-                       # client_data_by_id = client_data_by_id.drop(client_data_by_id.columns[0], axis=1)
-
                         # Appliquer le style pour formater les valeurs et centrer le texte
                         styled_df = client_data_by_id.style.format("{:.1f}")
 
@@ -347,24 +343,16 @@ if st.session_state.selected_client:
 
                     st.write('------------------------------')
 
-                    ###################### chartplot #####################
-    
+                    ###################### chartplot ####################                    
+
                     st.markdown("<u><h3>Importance des caractéristiques pour le Modèle de Crédit :</h3></u>", unsafe_allow_html=True)
-
-                    st.write(" La position et la longueur de chaque barre reflètent respectivement l'importance de chaque caractéristique et son impact sur la décision d'accorder un crédit.")
-
-                    fig, ax = plt.subplots()
+                    st.write("La position et la longueur de chaque barre reflètent respectivement l'importance de chaque caractéristique et son impact sur la décision d'accorder un crédit.")
 
                     fig_chartplot = go.Figure(go.Bar(y=feature_names, x=feature_importance, orientation='h', marker_color='skyblue'))
                     fig_chartplot.update_layout(xaxis_title='Importance', yaxis_title='Caractéristiques')
 
-                    st.plotly_chart(fig_chartplot)
-
-                    ax.barh(feature_names, feature_importance, color='skyblue')
-                    ax.set_xlabel('Importance')
-                    ax.set_ylabel('Caractéristiques')
-                    ax.set_title('ChartPlot des caractéristiques')
-                    st.pyplot(fig)
+                    # Rafraîchissement du graphique
+                    st.plotly_chart(fig_chartplot, use_container_width=True)
 
                     st.write('------------------------------')
 
@@ -381,13 +369,6 @@ if st.session_state.selected_client:
                     fig_decision_plot.update_layout(xaxis_title='Caractéristiques', yaxis_title='Importance')
 
                     st.plotly_chart(fig_decision_plot)
-
-                    ax.bar(feature_names, feature_importance, color='skyblue')
-                    ax.set_xlabel('Caractéristiques')
-                    ax.set_ylabel('Importance')
-                    ax.set_title('Decision Plot des caractéristiques')
-                    st.pyplot(fig)
-
             else:
                 st.error("Le client sélectionné est introuvable dans les données.")
 
