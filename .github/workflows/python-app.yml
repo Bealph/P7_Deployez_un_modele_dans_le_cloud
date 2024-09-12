@@ -22,4 +22,4 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest 
+        pytest C:\Users\alfa2\OneDrive\Documents\Data science\P7\dashboard\unittest_app.py
