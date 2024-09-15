@@ -337,19 +337,6 @@ if st.session_state.selected_client:
 
                     st.write('------------------------------')
 
-                    ###################### chartplot ####################                    
-
-                    st.markdown("<u><h3>Importance des caractéristiques pour le Modèle de Crédit :</h3></u>", unsafe_allow_html=True)
-                    st.write("La position et la longueur de chaque barre reflètent respectivement l'importance de chaque caractéristique et son impact sur la décision d'accorder un crédit.")
-
-                    fig_chartplot = go.Figure(go.Bar(y=feature_names, x=feature_importance, orientation='h', marker_color='skyblue'))
-                    fig_chartplot.update_layout(xaxis_title='Importance', yaxis_title='Caractéristiques')
-
-                    # Rafraîchissement du graphique
-                    st.plotly_chart(fig_chartplot, use_container_width=True)
-
-                    st.write('------------------------------')
-
                     #####################  Decision Plot  #####################
 
                     st.markdown("<u><h3>Poids des Critères dans l'Évaluation de Crédit :</h3></u>", unsafe_allow_html=True)
