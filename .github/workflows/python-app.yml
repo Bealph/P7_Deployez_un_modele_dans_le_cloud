@@ -1,4 +1,4 @@
-name: Python Flask App Tests
+name: Automated Tests for Flask App
 
 on: [push, pull_request]
 
@@ -18,8 +18,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
-        pip install pytest 
 
     - name: Run tests
       run: |
-        pytest P7_DS_OPC\unittest_app.py
+        pytest unittest_app.py
