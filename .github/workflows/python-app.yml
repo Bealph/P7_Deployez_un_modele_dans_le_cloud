@@ -22,4 +22,4 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest  P7_DS_OPC/
+        pytest P7_DS_OPC\unittest_app.py
