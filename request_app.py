@@ -74,13 +74,13 @@ if __name__ == "__main__":
     )
 
     print("Client sélectionné:")
-    print(selected_client)
+    print( )
 
     print("Prédictions:")
-    print(prediction_proba)
+    print( )
 
     print("Noms des features:")
-    print(feature_names)
+    print( )
 
     print("Importance des features:")
-    print(feature_importance)
+ 
