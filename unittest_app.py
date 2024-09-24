@@ -11,34 +11,41 @@ base_url = "http://127.0.0.1:5000"
 headers = {"Content-Type": "application/json"}
 
 # Charger les données de test
-df = pd.read_csv("top_50_train.csv", encoding='utf-8')
-df.set_index('SK_ID_CURR', inplace=True)
-var_df_dict = df.iloc[0].to_dict()
+@pytest.fixture(scope="module")
+def test_data():
+    df = pd.read_csv("top_50_train.csv", encoding='utf-8')
+    df.set_index('SK_ID_CURR', inplace=True)
+    return df
 
 # Test de la fonction de chargement des données CSV
-def test_csv_loading():
-    # Vérifier que les données ont été correctement indexées
+def test_csv_loading(test_data):
+    df = test_data
     assert df.index.name == 'SK_ID_CURR', "L'index du dataframe ne correspond pas à 'SK_ID_CURR'."
 
+# Fixture pour la base_url
+@pytest.fixture(scope="module")
+def api_base_url():
+    return "http://127.0.0.1:5000"
 
-
-# Test de l'API Flask
-def test_homepage():
-    response = requests.get(base_url + '/')
+# Test de l'API Flask - Homepage
+def test_homepage(api_base_url):
+    response = requests.get(api_base_url + '/')
     assert response.status_code == 200
     assert response.text == "Hello, World! Welcome to my Flask App."
 
-def test_predict_endpoint():
-    response = requests.post(f'{base_url}/api/infos_client/', headers=headers, json=var_df_dict)
+# Test de l'API Flask - Predict Endpoint
+def test_predict_endpoint(api_base_url, test_data):
+    var_df_dict = test_data.iloc[0].to_dict()
+    response = requests.post(f'{api_base_url}/api/infos_client/', headers=headers, json=var_df_dict)
     assert response.status_code == 200
     json_data = response.json()
     assert 'proba' in json_data
     assert 'feature_names' in json_data
     assert 'feature_importance' in json_data
 
-# Test de la fonction de prédiction de l'API
+# Test de la fonction de prédiction de l'API avec Mock
 @patch('requests.post')
-def test_prediction_function(mock_post):
+def test_prediction_function(mock_post, test_data):
     # Configurer le comportement simulé de la requête
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = {
@@ -48,7 +55,7 @@ def test_prediction_function(mock_post):
     }
 
     # Appeler la fonction de prédiction
-    selected_client = df.sample(1)
+    selected_client = test_data.sample(1)
     prediction_proba, feature_names, feature_importance = ra.get_infos_client(selected_client)
 
     # Vérifier que les résultats sont corrects
@@ -57,7 +64,7 @@ def test_prediction_function(mock_post):
     assert feature_importance == [0.5, 0.3], "Les importances des features ne sont pas correctes."
 
 # Test du dashboard Streamlit
-def test_dashboard():
+def test_dashboard(test_data):
     # Simuler l'interface Streamlit
     with patch('streamlit.write') as mock_write:
         # Initialiser les états de session
@@ -88,7 +95,7 @@ def test_dashboard():
                                     # Simuler le code de votre dashboard ici
                                     st.write("Test de l'affichage des prédictions")
                                     st.image("image_app.jpeg")  # Ajout d'un appel à image pour tester la fonctionnalité
-                                    st.dataframe(df)  # Ajouter d'autres appels de Streamlit selon le cas
+                                    st.dataframe(test_data)  # Ajouter d'autres appels de Streamlit selon le cas
                                     
                                     # Vérifier que les fonctions de Streamlit sont appelées correctement
                                     mock_write.assert_called_with("Test de l'affichage des prédictions")
