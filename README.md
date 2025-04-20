@@ -2,23 +2,18 @@ P7 - Déployez un modèle dans le cloud
 
 Objectif du projet
 
-Ce projet vise à déployer un modèle de machine learning dans une infrastructure cloud scalable, en utilisant AWS comme plateforme principale. L’objectif est de mettre en place une chaîne de traitement Big Data capable de gérer des volumes de données croissants, tout en respectant les contraintes de performance, de coût et de conformité (RGPD). Le modèle déployé s’appuie sur un cas d’usage financier (prédiction de défaut de paiement), basé sur les données de Home Credit.
+Développé dans le cadre d'un projet AgriTech, il vise à créer une application mobile permettant aux utilisateurs de photographier un fruit et d'obtenir des informations sur celui-ci. L'objectif est double : sensibiliser le grand public à la biodiversité des fruits tout en posant les bases d'une architecture Big Data scalable pour la classification d'images. Ce repository met en œuvre une première chaîne de traitement des données avec AWS EMR et PySpark, préparant le terrain pour une montée en volume de données.
 
 Contenu du repository:
 
-.github/workflows : Configuration des workflows CI/CD pour automatiser les tests et le déploiement.
-.gitignore : Exclusion des fichiers non pertinents pour le versionnement.
-HomeCredit_columns_description_translated.csv : Description traduite des colonnes du jeu de données Home Credit.
-app.py : Script principal pour l’application API déployée.
-dashboard.py : Script pour générer un tableau de bord interactif.
-expected_value.pkl : Fichier contenant les valeurs attendues pour validation.
-mon_best_modele_entraine_LightGBM.pkl : Modèle LightGBM entraîné.
-request_app.py : Script pour effectuer des requêtes vers l’API.
-requirements.txt : Dépendances Python nécessaires.
-shap_values.pkl : Valeurs SHAP pour l’interprétabilité du modèle.
-top_50_train.csv : Jeu de données d’entraînement réduit (50 premières lignes).
-top_50_vraiVal_X_train.csv : Données de validation correspondantes.
-unittest_app.py : Tests unitaires pour valider l’application.
+.github/workflows : Configuration des workflows GitHub pour l'intégration et le déploiement continus (CI/CD).
+.gitignore : Fichiers et dossiers exclus du contrôle de version Git.
+app.py : Script principal pour le traitement des données sur AWS EMR avec PySpark.
+dashboard.py : Script de visualisation des résultats.
+request_app.py : Script pour les requêtes à l'application.
+requirements.txt : Liste des dépendances Python.
+top_50_train.csv, top_50_vraiVal_X_train.csv : Datasets pour l'entraînement et la validation.
+unittest_app.py : Tests unitaires pour valider l'application.
 
 Architecture cloud :
 
